@@ -18,17 +18,15 @@ class FeatureExtractor(ScriptedLoadableModule):
   def __init__(self, parent):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Feature Extractor"
-    self.parent.categories = ["Examples"]
+    self.parent.categories = ["Features"]
     self.parent.dependencies = []
-    self.parent.contributors = ["John Doe (AnyWare Corp.)"] # replace with "Firstname Lastname (Organization)"
+    self.parent.contributors = ["Antonio Carlos da Silva Senra Filho, Fabricio Henrique Simozo (University of São Paulo)"] # replace with "Firstname Lastname (Organization)"
     self.parent.helpText = """
-This is an example of scripted loadable module bundled in an extension.
-It performs a simple thresholding on the input volume and optionally captures a screenshot.
+This is a scripted module that applies the Z-Score Mapping CLI module using pre-defined templates. It offers templates for T1, T2, PD, DTI-FA, DTI-ADC, DTI-RA and DTI-RD images built from healthy subjects.
 """
     self.parent.helpText += self.getDefaultModuleDocumentationLink()
     self.parent.acknowledgementText = """
-This file was originally developed by Jean-Christophe Fillion-Robin, Kitware Inc.
-and Steve Pieper, Isomics, Inc. and was partially funded by NIH grant 3P41RR013218-12S1.
+This work was partially funded by CAPES and CNPq, Brazillian Agencies.
 """ # replace with organization, grant and thanks.
 
 #
@@ -68,7 +66,7 @@ class FeatureExtractorWidget(ScriptedLoadableModuleWidget):
     self.inputSelector.showHidden = False
     self.inputSelector.showChildNodeTypes = False
     self.inputSelector.setMRMLScene( slicer.mrmlScene )
-    self.inputSelector.setToolTip( "Pick the input to the algorithm." )
+    self.inputSelector.setToolTip( "Pick the input to the algorithm. NOTE: This image MUST be in ICBM space (as MNI-152)." )
     parametersZScoreLayout.addRow("Input Volume: ", self.inputSelector)
 
 
@@ -99,7 +97,7 @@ class FeatureExtractorWidget(ScriptedLoadableModuleWidget):
     self.regionMaskSelector.showHidden = False
     self.regionMaskSelector.showChildNodeTypes = False
     self.regionMaskSelector.setMRMLScene( slicer.mrmlScene )
-    self.regionMaskSelector.setToolTip( "Pick ..." )
+    self.regionMaskSelector.setToolTip( "Pick the label image that defines the region in which the Z-Score will be computed. If a mask is not selected, the operation will be performed for all voxels that contains a value bigger than zero in the selected pre-defined template." )
     parametersZScoreLayout.addRow("Region Mask: ", self.regionMaskSelector)
 
     #
@@ -114,7 +112,7 @@ class FeatureExtractorWidget(ScriptedLoadableModuleWidget):
     self.setImageModalityComboBoxWidget.addItem("DTI-RA")
     self.setImageModalityComboBoxWidget.addItem("DTI-RD")
     self.setImageModalityComboBoxWidget.setToolTip(
-      "....")
+      "Select the image modality of the template to be used. This should match the image modality of the input volume.")
     parametersZScoreLayout.addRow("Image Modality ", self.setImageModalityComboBoxWidget)
 
     #
@@ -124,7 +122,7 @@ class FeatureExtractorWidget(ScriptedLoadableModuleWidget):
     self.setImageResolutionComboBoxWidget.addItem("1mm")
     self.setImageResolutionComboBoxWidget.addItem("2mm")
     self.setImageResolutionComboBoxWidget.setToolTip(
-      "....")
+      "Select the resolution of the template to be used. This should match the resolution of the input volume.")
     parametersZScoreLayout.addRow("Image Resolution ", self.setImageResolutionComboBoxWidget)
 
     #
@@ -133,7 +131,7 @@ class FeatureExtractorWidget(ScriptedLoadableModuleWidget):
     self.setDoHistogramMatchingBooleanWidget = ctk.ctkCheckBox()
     self.setDoHistogramMatchingBooleanWidget.setChecked(False)
     self.setDoHistogramMatchingBooleanWidget.setToolTip(
-      "....")
+      "If this box is checked, a histogram match operation will be performed between the input volume and the selected template")
     parametersZScoreLayout.addRow("Apply Histogram Matching",
                                       self.setDoHistogramMatchingBooleanWidget)
 

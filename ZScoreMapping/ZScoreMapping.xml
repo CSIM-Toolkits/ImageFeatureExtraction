@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
- <category>Examples</category>
+ <category>Features</category>
  <title>ZScoreMapping</title>
- <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+ <description><![CDATA[This is a CLI module that performs the voxel-wise Z-Score map calculation give an input image and template images for mean and std. A mask can be used in order to define a region of interest. If a mask is not defined, the calculation will be performed in every voxel that contains a value bigger than zero in the reference template.]]></description>
  <version>0.0.1</version>
  <documentation-url>http://www.example.com/Slicer/Modules/ZScoreMapping</documentation-url>
  <license>Slicer</license>
- <contributor>FirstName LastName (Institution), FirstName LastName (Institution)</contributor>
- <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+ <contributor>Antonio Carlos da Silva Senra Filho, Fabricio Henrique Simozo (University of São Paulo)</contributor>
+ <acknowledgements>This work was partially funded by CAPES and CNPq, Brazillian Agencies.</acknowledgements>
  <parameters>
    <label>IO</label>
    <description><![CDATA[Input/output parameters]]></description>
