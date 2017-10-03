@@ -1,6 +1,8 @@
 #include "itkImageFileWriter.h"
 
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
+#include "itkImageRegionIterator.h"
+#include "itkHistogramMatchingImageFilter.h"
 
 #include "itkPluginUtilities.h"
 
@@ -19,30 +21,113 @@ int DoIt( int argc, char * argv[], TPixel )
 {
   PARSE_ARGS;
 
-  typedef TPixel InputPixelType;
-  typedef TPixel OutputPixelType;
+  typedef TPixel        InputPixelType;
+  typedef float         OutputPixelType;
+  typedef unsigned char LabelPixelType;
 
   const unsigned int Dimension = 3;
 
   typedef itk::Image<InputPixelType,  Dimension> InputImageType;
+  typedef itk::Image<LabelPixelType,  Dimension> LabelImageType;
   typedef itk::Image<OutputPixelType, Dimension> OutputImageType;
 
   typedef itk::ImageFileReader<InputImageType>  ReaderType;
+  typedef itk::ImageFileReader<LabelImageType>  LabelReaderType;
 
-  typename ReaderType::Pointer reader = ReaderType::New();
+  typename ReaderType::Pointer readerInput = ReaderType::New();
+  typename ReaderType::Pointer readerTemplateMean = ReaderType::New();
+  typename ReaderType::Pointer readerTemplateSTD = ReaderType::New();
+  typename LabelReaderType::Pointer readerRegionMask = LabelReaderType::New();
 
-  reader->SetFileName( inputVolume.c_str() );
+  readerInput->SetFileName( inputVolume.c_str() );
+  readerTemplateMean->SetFileName( inputTemplateMean.c_str() );
+  readerTemplateSTD->SetFileName( inputTemplateStd.c_str() );
+  readerInput->Update();
+  readerTemplateMean->Update();
+  readerTemplateSTD->Update();
 
-  typedef itk::SmoothingRecursiveGaussianImageFilter<
-    InputImageType, OutputImageType>  FilterType;
-  typename FilterType::Pointer filter = FilterType::New();
-  filter->SetInput( reader->GetOutput() );
-  filter->SetSigma( sigma );
+  //Apply histogram matching
+  typedef itk::HistogramMatchingImageFilter<InputImageType,InputImageType>        HistogramMatchingType;
+typename HistogramMatchingType::Pointer hMatch = HistogramMatchingType::New();
+  if (doHistogramMatching) {
+      std::cout<<"Performing histogram matching"<<std::endl;
+
+      hMatch->SetReferenceImage( readerTemplateMean->GetOutput() );
+      hMatch->SetInput( readerInput->GetOutput() );
+      hMatch->SetNumberOfHistogramLevels( 255 );
+      hMatch->SetNumberOfMatchPoints( 64 );
+      hMatch->Update();
+  }
+
+  //Calculate Z-Score map
+  typename OutputImageType::Pointer zScoreMap = OutputImageType::New();
+  zScoreMap->CopyInformation(readerInput->GetOutput());
+  zScoreMap->SetRegions(readerInput->GetOutput()->GetRequestedRegion());
+  zScoreMap->Allocate();
+  zScoreMap->FillBuffer(0);
+
+  typedef itk::ImageRegionIterator<InputImageType>      RegionIteratorType;
+  typedef itk::ImageRegionIterator<OutputImageType>      OutputRegionIteratorType;
+
+  RegionIteratorType imgIt(doHistogramMatching?hMatch->GetOutput():readerInput->GetOutput(),
+                           doHistogramMatching?hMatch->GetOutput()->GetRequestedRegion():readerInput->GetOutput()->GetRequestedRegion());
+  RegionIteratorType tempMeanIt(readerTemplateMean->GetOutput(), readerTemplateMean->GetOutput()->GetRequestedRegion());
+  RegionIteratorType tempStdIt(readerTemplateSTD->GetOutput(), readerTemplateSTD->GetOutput()->GetRequestedRegion());
+  OutputRegionIteratorType zScoreIt(zScoreMap, zScoreMap->GetRequestedRegion());
+
+  if (regionMask == "") {
+        std::cout<<"Calculating Z-Score mapping - full brain coverage"<<std::endl;
+
+        imgIt.GoToBegin();
+        tempMeanIt.GoToBegin();
+        tempStdIt.GoToBegin();
+        zScoreIt.GoToBegin();
+        float temp_zscore=0.0;
+        while(!imgIt.IsAtEnd()){
+            if (tempMeanIt.Get()>static_cast<InputPixelType>(0)) {
+                temp_zscore = (static_cast<OutputPixelType>(imgIt.Get()) - static_cast<OutputPixelType>(tempMeanIt.Get()))
+                        / static_cast<OutputPixelType>(tempStdIt.Get());
+                zScoreIt.Set(temp_zscore);
+            }
+            ++imgIt;
+            ++tempMeanIt;
+            ++tempStdIt;
+            ++zScoreIt;
+        }
+  }else{
+      std::cout<<"Calculating Z-Score mapping - region defined in label map"<<std::endl;
+
+      readerRegionMask->SetFileName( regionMask.c_str() );
+      readerRegionMask->Update();
+
+      typedef itk::ImageRegionIterator<LabelImageType>      LabelIteratorType;
+      LabelIteratorType regionIt(readerRegionMask->GetOutput(), readerRegionMask->GetOutput()->GetRequestedRegion());
+
+      imgIt.GoToBegin();
+      tempMeanIt.GoToBegin();
+      tempStdIt.GoToBegin();
+      regionIt.GoToBegin();
+      zScoreIt.GoToBegin();
+      float temp_zscore=0.0;
+      while(!imgIt.IsAtEnd()){
+          if (regionIt.Get()>static_cast<LabelPixelType>(0)) {
+              temp_zscore = (static_cast<OutputPixelType>(imgIt.Get()) - static_cast<OutputPixelType>(tempMeanIt.Get()))
+                      / static_cast<OutputPixelType>(tempStdIt.Get());
+              zScoreIt.Set(temp_zscore);
+          }
+          ++imgIt;
+          ++tempMeanIt;
+          ++tempStdIt;
+          ++regionIt;
+          ++zScoreIt;
+      }
+  }
+
 
   typedef itk::ImageFileWriter<OutputImageType> WriterType;
   typename WriterType::Pointer writer = WriterType::New();
   writer->SetFileName( outputVolume.c_str() );
-  writer->SetInput( filter->GetOutput() );
+  writer->SetInput( zScoreMap );
   writer->SetUseCompression(1);
   writer->Update();
 
