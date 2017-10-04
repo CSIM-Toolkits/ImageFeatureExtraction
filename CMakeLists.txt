@@ -6,8 +6,8 @@ project(ImageFeatureExtraction)
 # Extension meta-information
 set(EXTENSION_HOMEPAGE "http://slicer.org/slicerWiki/index.php/Documentation/Nightly/Extensions/ImageFeatureExtraction")
 set(EXTENSION_CATEGORY "Features")
-set(EXTENSION_CONTRIBUTORS "Antonio Carlos da Silva Senra Filho, Fabricio Henrique Simozo (University of São Paulo)"
-set(EXTENSION_DESCRIPTION "This extension includes modules for comparing an MRI voxel-wise with distributions obtained from healthy subjects.")
+set(EXTENSION_CONTRIBUTORS "Antonio Carlos da Silva Senra Filho, Fabricio Henrique Simozo (University of São Paulo)")
+set(EXTENSION_DESCRIPTION "This extension includes modules for MRI voxel-wise comparison with signal distributions obtained from healthy subjects.")
 set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/ImageFeatureExtraction.png")
 set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/ImageFeatureExtraction/Screenshots/1.png")
 set(EXTENSION_DEPENDS "NA") # Specified as a space separated string, a list or 'NA' if any

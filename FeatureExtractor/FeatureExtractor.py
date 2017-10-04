@@ -77,6 +77,7 @@ class FeatureExtractorWidget(ScriptedLoadableModuleWidget):
     self.outputSelector.nodeTypes = ["vtkMRMLScalarVolumeNode"]
     self.outputSelector.selectNodeUponCreation = True
     self.outputSelector.addEnabled = True
+    self.outputSelector.renameEnabled = True
     self.outputSelector.removeEnabled = True
     self.outputSelector.noneEnabled = False
     self.outputSelector.showHidden = False

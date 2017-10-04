@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
- <category>Features</category>
- <title>ZScoreMapping</title>
+ <category>Utilities.CSIM Supporting Modules.Image Feature Extraction</category>
+ <title>Z Score Mapping</title>
  <description><![CDATA[This is a CLI module that performs the voxel-wise Z-Score map calculation give an input image and template images for mean and std. A mask can be used in order to define a region of interest. If a mask is not defined, the calculation will be performed in every voxel that contains a value bigger than zero in the reference template.]]></description>
  <version>0.0.1</version>
  <documentation-url>http://www.example.com/Slicer/Modules/ZScoreMapping</documentation-url>
