@@ -21,6 +21,7 @@ include(${Slicer_USE_FILE})
 # Extension modules
 add_subdirectory(ZScoreMapping)
 add_subdirectory(FeatureExtractor)
+add_subdirectory(JointFeatureInformation)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------

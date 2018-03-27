@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Examples</category>
+  <title>JointFeatureInformation</title>
+  <description><![CDATA[This is a CLI module that can be bundled in an extension]]></description>
+  <version>0.0.1</version>
+  <documentation-url>http://www.example.com/Slicer/Modules/JointFeatureInformation</documentation-url>
+  <license>Slicer</license>
+  <contributor>FirstName LastName (Institution), FirstName LastName (Institution)</contributor>
+  <acknowledgements>This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN</acknowledgements>
+  <parameters>
+    <label>IO</label>
+    <description><![CDATA[Input/output parameters]]></description>
+    <image multiple="true" type="scalar">
+      <name>inputs</name>
+      <label>Input Features</label>
+      <longflag alias="features">inputFeatures</longflag>
+      <channel>input</channel>
+      <description><![CDATA[Input features volumes in a comma separated list (ex: --inputFeatures img1.nrrd,img2.nrrd,img3.nrrd,...). NOTE: All the inputs MUST be in the same space (size,origin,spacing,...) and also the same scalar type.]]></description>
+    </image>
+    <image type="label">
+      <name>maskVolume</name>
+      <label>Mask Volume</label>
+      <longflag alias="mask">mask</longflag>
+      <flag>m</flag>
+      <channel>input</channel>
+      <description><![CDATA[Mask volume that will be applied in each image feature.]]></description>
+    </image>
+    <image type="scalar">
+      <name>outputJoint</name>
+      <label>Joint Information Feature</label>
+      <channel>output</channel>
+      <index>0</index>
+      <description><![CDATA[Output the joint information feature using the inputs data.]]></description>
+    </image>
+  </parameters>
+  <parameters>
+    <label>Parameters</label>
+    <description><![CDATA[Parameters for joint information]]></description>
+    <integer-vector>
+      <name>weights</name>
+      <longflag>--weights</longflag>
+      <flag>w</flag>
+      <label>Joint Weights</label>
+      <description><![CDATA[Defines the weights for each input feature used for the joint information. This is useful to balance the values of each texture mapping in order to increase the effect of an desired feature. Use float point values for the weigths, which gives its representatitivity to the final joint information. Ex: 1,1,3 - the third feature is 3x more important than the other two. NOTE: Enter as much weights as the number of inputs (following its order).]]></description>
+      <default>1,1,1</default>
+    </integer-vector>
+	<boolean>
+	      <name>doOutlierRemoval</name>
+	      <longflag>--doOutlierRemoval</longflag>
+	      <description><![CDATA[Choose if you want to apply a outlier removal in the final joint information mapping. This is helpful to restrict the data to a meaningful response, which reduce the influence of known artifacts (border shifting, peak signals in CT data, etc). The percentiles of lower and higher threshold can be adjusted.]]></description>
+	      <label>Apply Outlier Removal</label>
+	      <default>true</default>
+	</boolean>
+    <float>
+      <name>upperCut</name>
+      <longflag>--uCut</longflag>
+      <flag>u</flag>
+      <label>Upper Cut Off</label>
+      <description><![CDATA[Defines the upper cut off for the image threshold.]]></description>
+      <default>0.98</default>
+      <constraints>
+        <minimum>0.01</minimum>
+        <maximum>0.51</maximum>
+        <step>0.01</step>
+      </constraints>
+    </float>
+    <float>
+      <name>lowerCut</name>
+      <longflag>--lCut</longflag>
+      <flag>l</flag>
+      <label>Lower Cut Off</label>
+      <description><![CDATA[Defines the lower cut off for the image threshold.]]></description>
+      <default>0.02</default>
+      <constraints>
+        <minimum>0.01</minimum>
+        <maximum>0.49</maximum>
+        <step>0.01</step>
+      </constraints>
+    </float>
+	<boolean>
+	      <name>transformWeighting</name>
+	      <longflag>--transformToWeights</longflag>
+          <flag>t</flag>
+	      <description><![CDATA[Transform the joint information into a weigthing map to be applied in the original image. This can be applied to enhance the features characteristics into the original image. Ex: CT signal modeled by the joint information.]]></description>
+	      <label>Transforms To Weighting Map</label>
+	      <default>true</default>
+	</boolean>
+  </parameters>
+</executable>
