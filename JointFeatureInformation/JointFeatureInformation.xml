@@ -16,7 +16,7 @@
       <label>Input Features</label>
       <longflag alias="features">inputFeatures</longflag>
       <channel>input</channel>
-      <description><![CDATA[Input features volumes in a comma separated list (ex: --inputFeatures img1.nrrd,img2.nrrd,img3.nrrd,...). NOTE: All the inputs MUST be in the same space (size,origin,spacing,...) and also the same scalar type.]]></description>
+      <description><![CDATA[Input features volumes in a comma separated list (ex: --inputFeatures img1.nrrd,img2.nrrd,img3.nrrd,...). NOTE: All the inputs MUST be in the same space (size,origin,spacing,etc) and also the same scalar type.]]></description>
     </image>
     <image type="label">
       <name>maskVolume</name>
@@ -24,8 +24,16 @@
       <longflag alias="mask">mask</longflag>
       <flag>m</flag>
       <channel>input</channel>
-      <description><![CDATA[Mask volume that will be applied in each image feature.]]></description>
+      <description><![CDATA[Mask volume that will be applied in each image feature. Use it if you want to restrict the evaluation to a subset of the orignal image.]]></description>
     </image>
+    <integer>
+      <name>maskValue</name>
+      <longflag>--maskValue</longflag>
+      <flag>v</flag>
+      <label>Mask Value</label>
+      <description><![CDATA[Defines the values in the mask image that will describe the object in interest. A multilabel image can be provided and then several joint information maps can be generated individually.]]></description>
+      <default>1</default>
+    </integer>
     <image type="scalar">
       <name>outputJoint</name>
       <label>Joint Information Feature</label>
@@ -37,12 +45,20 @@
   <parameters>
     <label>Parameters</label>
     <description><![CDATA[Parameters for joint information]]></description>
-    <integer-vector>
+    <float-vector>
       <name>weights</name>
       <longflag>--weights</longflag>
       <flag>w</flag>
       <label>Joint Weights</label>
       <description><![CDATA[Defines the weights for each input feature used for the joint information. This is useful to balance the values of each texture mapping in order to increase the effect of an desired feature. Use float point values for the weigths, which gives its representatitivity to the final joint information. Ex: 1,1,3 - the third feature is 3x more important than the other two. NOTE: Enter as much weights as the number of inputs (following its order).]]></description>
+      <default>1,1,1</default>
+    </float-vector>
+    <integer-vector>
+      <name>invert</name>
+      <longflag>--invertFeatures</longflag>
+      <flag>i</flag>
+      <label>Invert Features</label>
+      <description><![CDATA[Defines whether the feature should be inverted in intensity in order to agree with the other image features. This is useful to balance the values of each texture to calculat its final average, i.e. the darker and brighter signal should mach in order to enhance an abnormal characteristic in the image. Use 1 for "continue as is" or 2 for "invert the signal". The values ordering is the same as given in the input data. Ex: 1,2,2 - use the first as is and invert the other last two image features.]]></description>
       <default>1,1,1</default>
     </integer-vector>
 	<boolean>
@@ -57,11 +73,11 @@
       <longflag>--uCut</longflag>
       <flag>u</flag>
       <label>Upper Cut Off</label>
-      <description><![CDATA[Defines the upper cut off for the image threshold.]]></description>
+      <description><![CDATA[Defines the upper cut off for the image threshold based on the cumulative probability function percentile.]]></description>
       <default>0.98</default>
       <constraints>
-        <minimum>0.01</minimum>
-        <maximum>0.51</maximum>
+        <minimum>0.51</minimum>
+        <maximum>0.99</maximum>
         <step>0.01</step>
       </constraints>
     </float>
@@ -70,7 +86,7 @@
       <longflag>--lCut</longflag>
       <flag>l</flag>
       <label>Lower Cut Off</label>
-      <description><![CDATA[Defines the lower cut off for the image threshold.]]></description>
+      <description><![CDATA[Defines the lower cut off for the image threshold based on the cumulative probability function percentile.]]></description>
       <default>0.02</default>
       <constraints>
         <minimum>0.01</minimum>

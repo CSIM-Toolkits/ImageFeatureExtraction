@@ -28,13 +28,14 @@ int DoIt( int argc, char * argv[], TPixel )
 {
     PARSE_ARGS;
 
-    typedef float InputPixelType;
-    typedef float OutputPixelType;
+    typedef TPixel InputPixelType;
+    typedef double OutputPixelType;
 
     std::cout<<"Joint information from:"<<std::endl;
     for (unsigned int i = 0; i < inputs.size(); ++i) {
         std::cout<<inputs[i]<<std::endl;
     }
+    //TODO Colocar uma funcao de check para ver se os parametros estao OK. 1) invert tem que ser 1 ou 2. 2) weights nao pode ser negativo...
 
     const unsigned int Dimension = 3;
 
@@ -62,7 +63,7 @@ int DoIt( int argc, char * argv[], TPixel )
         if (maskVolume!="") {
             masked->SetInput(reader->GetOutput());
             masked->SetMaskImage(label->GetOutput());
-            //            masked->SetMaskingValue(); TODO COlocar um int para o valor do label que sera usado para a mascara XML
+            //            masked->SetMaskingValue(maskValue); //TODO O maskingValue define o fundo (o por default)...implementar a separacao de uma multilabel por threshold...
             masked->Update();
 
             inputFeatures.push_back(masked->GetOutput());
@@ -79,7 +80,7 @@ int DoIt( int argc, char * argv[], TPixel )
     jointFeature->FillBuffer(static_cast<OutputPixelType>(0));
 
     typedef itk::ImageRegionConstIterator<InputImageType>           RegionConstIteratorType;
-    typedef itk::ImageRegionIteratorWithIndex<InputImageType>       RegionIteratorType;
+    typedef itk::ImageRegionIteratorWithIndex<OutputImageType>       RegionIteratorType;
     RegionIteratorType jointIt(jointFeature,jointFeature->GetRequestedRegion());
 
     jointIt.GoToBegin();
@@ -88,8 +89,14 @@ int DoIt( int argc, char * argv[], TPixel )
         for (unsigned int f = 0; f < inputFeatures.size(); ++f) {
             RegionConstIteratorType featureIt(inputFeatures[f],inputFeatures[f]->GetRequestedRegion());
             featureIt.SetIndex(jointIt.GetIndex());
-            //Applying the feature weights
-            jointValue+=featureIt.Get()*weights[f];
+            if (featureIt.Get()>static_cast<InputPixelType>(0)) {
+                //Applying the feature weights
+                if (invert[f]==1) {
+                    jointValue+=featureIt.Get()*weights[f];
+                }else if (invert[f]==2) {
+                    jointValue+=(1.0/featureIt.Get())*weights[f];
+                }
+            }
             sumWeigths+=weights[f];
         }
         jointIt.Set(jointValue/sumWeigths);
@@ -97,20 +104,20 @@ int DoIt( int argc, char * argv[], TPixel )
         ++jointIt;
     }
 
-    typedef itk::CastImageFilter<InputImageType, LabelImageType>    CastInputToLabelType;
-    typedef itk::BinaryThresholdImageFilter<InputImageType, LabelImageType>   BinaryFilterType;
-    typedef itk::ThresholdImageFilter<InputImageType>   ThresholdFilterType;
+//    typedef itk::CastImageFilter<InputImageType, LabelImageType>    CastInputToLabelType;
+    typedef itk::BinaryThresholdImageFilter<OutputImageType, LabelImageType>   BinaryFilterType;
+    typedef itk::ThresholdImageFilter<OutputImageType>   ThresholdFilterType;
     typename ThresholdFilterType::Pointer thr = ThresholdFilterType::New();
     typename BinaryFilterType::Pointer createdMask = BinaryFilterType::New();
     if (doOutlierRemoval) {
         std::cout<<"INFO: Outlier removal requested"<<std::endl;
         //Image statistics
-        typedef itk::StatisticsImageFilter<InputImageType> StatisticsImageFilterType;
+        typedef itk::StatisticsImageFilter<OutputImageType> StatisticsImageFilterType;
         typename StatisticsImageFilterType::Pointer stat = StatisticsImageFilterType::New ();
         stat->SetInput(jointFeature);
         stat->Update();
 
-        typedef itk::Statistics::MaskedImageToHistogramFilter< InputImageType, LabelImageType >   HistogramFilterType;
+        typedef itk::Statistics::MaskedImageToHistogramFilter< OutputImageType, LabelImageType >   HistogramFilterType;
         typename HistogramFilterType::Pointer histogramFilter = HistogramFilterType::New();
 
         typedef typename HistogramFilterType::HistogramSizeType   SizeType;
@@ -142,11 +149,6 @@ int DoIt( int argc, char * argv[], TPixel )
         const HistogramType *histogram = histogramFilter->GetOutput();
 
         //Setting the image thresholds
-
-//        for (int var = 0; var < histogram->Size(); ++var) {
-//            std::cout<<histogram->GetFrequency(var,0)<<std::endl;
-//        }
-
         double upper_percentile = histogram->Quantile(0,upperCut), lower_percentile = histogram->Quantile(0,lowerCut);
         std::cout<<"upperCut: "<<upper_percentile<<" - lowerCut: "<<lower_percentile<<std::endl;
 
@@ -174,7 +176,6 @@ int DoIt( int argc, char * argv[], TPixel )
             ++jointIt;
         }
 
-        std::cout<<"min: "<<min<<" - max:"<<max<<std::endl;
         jointIt.GoToBegin();
         while (!jointIt.IsAtEnd()) {
             //Transforming the joint information to a weighting map
@@ -182,9 +183,7 @@ int DoIt( int argc, char * argv[], TPixel )
                 jointIt.Set((jointIt.Get()-min)/(max-min));
             }
             ++jointIt;
-        }//TODO Terminar de verificar a conta...o mapa esta saindo zero!
-
-
+        }
 
     }
 
